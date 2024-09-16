@@ -26,24 +26,30 @@ class SearchKeywordController extends Controller
             Excel::import($import, $request->file('file'));
 
             $keywords = $import->getKeywords();
-
+            $chunks = array_chunk($keywords, 100);
             $apiKey = $request->input('api_key');
-            $query = [
-                'data' => $keywords,
-                'api_key' => $apiKey
-            ];
-            $responseBody = app(SearchKeywordService::class)->search($query);
-            $request->session()->put('results', $responseBody);
+            $combinedResponseBody = [];
+            foreach ($chunks as $chunk) {
+                $query = [
+                    'data' => $chunk,
+                    'api_key' => $apiKey
+                ];
+
+                $responseBody = app(SearchKeywordService::class)->search($query);
+
+                $combinedResponseBody = array_merge($combinedResponseBody, $responseBody);
+            }
+            $request->session()->put('results', $combinedResponseBody);
             return view('search-keyword', [
-                'results' => $responseBody
+                'results' => $combinedResponseBody
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error during search: ' . $e->getMessage());
-            return response()->json([
+            return view('search-keyword', [
                 'error' => 'Lỗi khi gửi yêu cầu tới API',
                 'message' => $e->getMessage(),
-            ], 500);
+            ]);
         }
     }
 

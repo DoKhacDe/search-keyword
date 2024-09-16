@@ -44,39 +44,46 @@
                 </a>
             </div>
         </div>
-
-        <table class="min-w-full divide-y divide-gray-700 table-auto bg-gray-800 shadow-md rounded-lg mt-8">
-            <thead class="bg-gray-700">
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Từ khóa
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Domain
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Thứ hạng
-                </th>
-            </tr>
-            </thead>
-            <tbody class="bg-gray-800 divide-y divide-gray-700">
-            @foreach($results as $result)
+        <div class="max-h-[600px] mt-8 relative" style="height: 600px; overflow-y: auto">
+            <table class="min-w-full divide-y divide-gray-700 table-auto bg-gray-800 shadow-md rounded-lg">
+                <thead class="bg-gray-700 sticky top-0">
                 <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">
-                        {{ $result['q'] ?? 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-500 underline">
-                        <a href="{{ $result['domain']}}">{{ $result['domain'] ?? 'N/A' }}</a>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        {{ $result['position'] ?? 'N/A' }}
-                    </td>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Từ khóa
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Domain
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Thứ hạng
+                    </th>
                 </tr>
-            @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="bg-gray-800 divide-y divide-gray-700">
+                @foreach($results as $result)
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">
+                            {{ $result['q'] ?? 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-500 underline">
+                            <a href="{{ $result['domain']}}">{{ $result['domain'] ?? 'N/A' }}</a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            {{ $result['position'] ?? 'N/A' }}
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
     @else
         <p class="text-center text-gray-500 mt-4">No results found.</p>
+    @endif
+
+    @if(isset($error))
+        <div class="w-full text-center">
+            <span class="text-red-500">{{$error}}</span>
+        </div>
     @endif
 </div>
 
