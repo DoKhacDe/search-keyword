@@ -18,35 +18,37 @@ class SearchKeywordController extends Controller
     public function search(Request $request)
     {
         try {
-            $request->validate([
-                'file' => 'required|mimes:xlsx,xls'
-            ]);
-            $import = new KeywordsImport();
 
-            Excel::import($import, $request->file('file'));
+           $keywords = $request->input('keywords');
+           $apiKey = $request->input('api_key');
+           $formatData = [];
+           foreach (json_decode($keywords) as $keyword) {
+               $formatData[] = [
+                 'q' => $keyword->keyword,
+                 'domain' => $keyword->domain,
+                 'gl' => $keyword->country,
+                 'hl' => $keyword->language,
+                 'num' => 100,
+               ];
+           }
 
-            $keywords = $import->getKeywords();
-            $chunks = array_chunk($keywords, 100);
-            $apiKey = $request->input('api_key');
-            $combinedResponseBody = [];
-            foreach ($chunks as $chunk) {
-                $query = [
-                    'data' => $chunk,
-                    'api_key' => $apiKey
-                ];
+           $query = [
+               'data' => $formatData,
+               'api_key' => $apiKey
+           ];
 
-                $responseBody = app(SearchKeywordService::class)->search($query);
+           $responseBody = app(SearchKeywordService::class)->search($query);
 
-                $combinedResponseBody = array_merge($combinedResponseBody, $responseBody);
+            if (!$responseBody) {
+                throw new \Exception('No response from the search service');
             }
-            $request->session()->put('results', $combinedResponseBody);
-            return view('search-keyword', [
-                'results' => $combinedResponseBody
-            ]);
+
+            return response()->json($responseBody, 201);
 
         } catch (\Exception $e) {
             Log::error('Error during search: ' . $e->getMessage());
-            return view('search-keyword', [
+            return response()->json([
+                'code' => 400,
                 'error' => 'Lỗi khi gửi yêu cầu tới API',
                 'message' => $e->getMessage(),
             ]);
@@ -55,8 +57,19 @@ class SearchKeywordController extends Controller
 
     public function export(Request $request)
     {
-        $results = $request->session()->get('results', []);
-
-        return Excel::download(new KeywordExport($results), 'results.xlsx');
+        $keywords = json_decode($request->input('keywords'), true);
+        $testData = [
+            [
+                'q' => 'test keyword1',
+                'domain' => 'http://example.com',
+                'position' => 1,
+            ],
+            [
+                'q' => 'test keyword2',
+                'domain' => 'http://example.com',
+                'position' => 2,
+            ]
+        ];
+        return Excel::download(new KeywordExport($testData), 'keywords.xlsx');
     }
 }
