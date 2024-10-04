@@ -11,42 +11,62 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class SearchKeywordController extends Controller
 {
-    public function view() {
+
+    public ?array $dataExport;
+
+    public function __construct()
+    {
+        $this->dataExport = [];
+    }
+
+    public function view()
+    {
         return view('search-keyword');
     }
 
     public function search(Request $request)
     {
         try {
-            $request->validate([
-                'file' => 'required|mimes:xlsx,xls'
-            ]);
-            $import = new KeywordsImport();
-
-            Excel::import($import, $request->file('file'));
-
-            $keywords = $import->getKeywords();
-            $chunks = array_chunk($keywords, 100);
+            $keywords = $request->input('keywords');
             $apiKey = $request->input('api_key');
-            $combinedResponseBody = [];
-            foreach ($chunks as $chunk) {
-                $query = [
-                    'data' => $chunk,
-                    'api_key' => $apiKey
+            $requestId = $request->input('id');
+            $request->session()->put('request_id', $requestId);
+            Log::info('ID: ' . $requestId);
+            $formatData = [];
+            foreach (json_decode($keywords) as $keyword) {
+                $formatData[] = [
+                    'q' => $keyword->keyword,
+                    'domain' => $keyword->domain,
+                    'gl' => $keyword->country,
+                    'hl' => $keyword->language,
+                    'num' => 100,
                 ];
-
-                $responseBody = app(SearchKeywordService::class)->search($query);
-
-                $combinedResponseBody = array_merge($combinedResponseBody, $responseBody);
             }
-            $request->session()->put('results', $combinedResponseBody);
-            return view('search-keyword', [
-                'results' => $combinedResponseBody
-            ]);
+
+            $query = [
+                'data' => $formatData,
+                'api_key' => $apiKey
+            ];
+
+            $responseBody = app(SearchKeywordService::class)->search($query);
+            if (is_array($responseBody)) {
+                $existingResults = $request->session()->get('results-'. $requestId, []);
+                $mergedResults = array_merge($existingResults, $responseBody);
+                $request->session()->put('results-'. $requestId, $mergedResults);
+                Log::info('Merged Results: ', $mergedResults);
+            } else {
+                throw new \Exception('No valid response from the search service');
+            }
+            if (!$responseBody) {
+                throw new \Exception('No response from the search service');
+            }
+
+            return response()->json($responseBody, 201);
 
         } catch (\Exception $e) {
             Log::error('Error during search: ' . $e->getMessage());
-            return view('search-keyword', [
+            return response()->json([
+                'code' => 400,
                 'error' => 'Lỗi khi gửi yêu cầu tới API',
                 'message' => $e->getMessage(),
             ]);
@@ -55,8 +75,8 @@ class SearchKeywordController extends Controller
 
     public function export(Request $request)
     {
-        $results = $request->session()->get('results', []);
-
+        $requestId = $request->session()->get('request_id', '');
+        $results = $request->session()->get('results-'. $requestId, []);
         return Excel::download(new KeywordExport($results), 'results.xlsx');
     }
 }
