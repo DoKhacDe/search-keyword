@@ -123,7 +123,7 @@
                 $('#error-message').addClass('hidden');
             }
 
-            let keywords = arrayChunk(window.excelData, 2);
+            let keywords = arrayChunk(window.excelData, 100);
             let now = new Date();
             let currentTimeId = now.toISOString().replace(/[-:T]/g, '').split('.')[0];
             const apiKey = $('#api_key').val();
