@@ -50,17 +50,13 @@
     <div id="error-message" class="w-full text-center hidden mt-3">
         <span class="text-red-500"></span>
     </div>
-    <div id="results-container" class="mt-12">
+    <div id="results-container" class="mt-12 hidden">
         <div class="flex justify-between items-center">
             <h2 class="text-2xl font-semibold text-gray-100">Results</h2>
             <div class="mt-8 text-center">
-                <form id="export">
-                    @csrf
-                    <input type="hidden" name="keywords"/>
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                        Download Excel
-                    </button>
-                </form>
+                <a href="{{ route('export') }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Download Excel
+                </a>
             </div>
         </div>
         <div class="max-h-[600px] mt-8 relative" style="height: 600px; overflow-y: auto">
@@ -127,10 +123,13 @@
                 $('#error-message').addClass('hidden');
             }
 
-            let keywords = arrayChunk(window.excelData, 10);
+            let keywords = arrayChunk(window.excelData, 2);
+            let now = new Date();
+            let currentTimeId = now.toISOString().replace(/[-:T]/g, '').split('.')[0];
             const apiKey = $('#api_key').val();
             let promises = keywords.map(chunk => {
                 const formData = new FormData();
+                formData.append('id', currentTimeId);
                 formData.append('api_key', apiKey);
                 formData.append('keywords', JSON.stringify(chunk));
                 return $.ajax({
@@ -163,9 +162,9 @@
                             console.log('result ', result);
                             $('#results-body').append(`
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">${result.q || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-500 underline"><a href="${result.domain}">${result.domain || 'N/A'}</a></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">${result.position || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">${result.q || 'not found'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-500 underline"><a href="${result.domain}">${result.domain || 'not found'}</a></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">${result.position || 'not found'}</td>
                     </tr>
                 `);
                         });
@@ -179,41 +178,6 @@
                     $('#error-message').removeClass('hidden').find('span').text('An error occurred.');
                     console.error('AJAX Error: ', error);
                 });
-        });
-
-        $(document).ready(function() {
-            $('#export').on('submit', function(event) {
-                event.preventDefault();
-
-                if (!window.dataKeywords || window.dataKeywords.length === 0) {
-                    $('#error-message').removeClass('hidden').find('span').text('Không có dữ liệu để tải xuống.');
-                    return;
-                }
-
-                const formData = new FormData();
-                formData.append('keywords', JSON.stringify(window.dataKeywords));
-
-                $.ajax({
-                    url: '{{ route('export') }}',
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        const url = window.URL.createObjectURL(new Blob([response]));
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.setAttribute('download', 'results.xlsx');
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                    },
-                    error: function(xhr, status, error) {
-                        $('#error-message').removeClass('hidden').find('span').text('Đã xảy ra lỗi khi tải xuống.');
-                        console.error('AJAX Error: ', error);
-                    }
-                });
-            });
         });
     </script>
 </div>

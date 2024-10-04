@@ -18,9 +18,9 @@ class KeywordExport implements FromArray, WithHeadings
     {
         return array_map(function($item) {
             return [
-                'keyword' => $item['q'] ?? 'N/A',
-                'domain' => $item['domain'] ?? 'N/A',
-                'position' => $item['position'] ?? 'N/A'
+                'keyword' => $item['q'] ?? 'not found',
+                'domain' => $item['domain'] ?? 'not found',
+                'position' => $item['position'] ?? 'not found'
             ];
         }, $this->results);
     }
