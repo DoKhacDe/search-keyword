@@ -26,14 +26,16 @@ class SearchKeywordService
         foreach ($query['data'] as $item) {
             $item['request_id'] = $query['request_id'];
             foreach ($res as $ser) {
-                $position = array_filter($ser->organic, function($value) use ($item) {
-                    return str_contains($value->link, $item['domain']);
-                });
+                if ($ser->organic && count($ser->organic) > 0) {
+                    $position = array_filter($ser->organic, function($value) use ($item) {
+                        return str_contains($value->link, $item['domain']);
+                    });
 
-                $firstPosition = reset($position);
+                    $firstPosition = reset($position);
 
-                if ($firstPosition && isset($firstPosition->position)) {
-                    $item['position'] = $firstPosition->position;
+                    if ($firstPosition && isset($firstPosition->position)) {
+                        $item['position'] = $firstPosition->position;
+                    }
                 }
             }
             $data[] = $item;
