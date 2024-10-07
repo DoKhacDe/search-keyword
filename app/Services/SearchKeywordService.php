@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\DataKeywordJob;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 
@@ -23,6 +24,7 @@ class SearchKeywordService
 
         $data = [];
         foreach ($query['data'] as $item) {
+            $item['request_id'] = $query['request_id'];
             foreach ($res as $ser) {
                 $position = array_filter($ser->organic, function($value) use ($item) {
                     return str_contains($value->link, $item['domain']);
@@ -36,6 +38,8 @@ class SearchKeywordService
             }
             $data[] = $item;
         }
+
+        DataKeywordJob::dispatch($data);
         return $data;
     }
 }
