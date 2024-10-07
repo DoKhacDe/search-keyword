@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\KeywordExport;
 use App\Imports\KeywordsImport;
+use App\Models\Keyword;
 use App\Services\SearchKeywordService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -45,7 +46,8 @@ class SearchKeywordController extends Controller
 
             $query = [
                 'data' => $formatData,
-                'api_key' => $apiKey
+                'api_key' => $apiKey,
+                'request_id' => $requestId
             ];
 
             $responseBody = app(SearchKeywordService::class)->search($query);
@@ -53,7 +55,6 @@ class SearchKeywordController extends Controller
                 $existingResults = $request->session()->get('results-'. $requestId, []);
                 $mergedResults = array_merge($existingResults, $responseBody);
                 $request->session()->put('results-'. $requestId, $mergedResults);
-                Log::info('Merged Results: ', $mergedResults);
             } else {
                 throw new \Exception('No valid response from the search service');
             }
@@ -76,7 +77,11 @@ class SearchKeywordController extends Controller
     public function export(Request $request)
     {
         $requestId = $request->session()->get('request_id', '');
-        $results = $request->session()->get('results-'. $requestId, []);
-        return Excel::download(new KeywordExport($results), 'results.xlsx');
+        $results = Keyword::where('request_id', $requestId)->get()->toArray();
+        if ($results && count($results) > 0) {
+            return Excel::download(new KeywordExport($results), 'results.xlsx');
+        } else {
+            throw new \Exception('Export fail');
+        }
     }
 }
