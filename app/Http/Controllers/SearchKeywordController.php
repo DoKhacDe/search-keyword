@@ -40,6 +40,7 @@ class SearchKeywordController extends Controller
                     'domain' => $keyword->domain,
                     'gl' => $keyword->country,
                     'hl' => $keyword->language,
+                    'location' => 'United States',
                     'num' => 100,
                 ];
             }
