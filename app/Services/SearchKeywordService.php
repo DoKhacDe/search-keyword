@@ -17,7 +17,6 @@ class SearchKeywordService
                 'X-API-KEY' => $query['api_key'],
                 'Content-Type' => 'application/json',
             ],
-            'proxy' => "http://bfujohva-US-rotate:jhu65y93b8l6@p.webshare.io:80",
             'json' => $query['data'],
         ]);
 
