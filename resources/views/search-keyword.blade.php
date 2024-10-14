@@ -133,7 +133,7 @@
                 formData.append('api_key', apiKey);
                 formData.append('keywords', JSON.stringify(chunk));
                 return $.ajax({
-                    url: '/search-keyword',
+                    url: '/api/search-keyword',
                     method: 'POST',
                     data: formData,
                     processData: false,
