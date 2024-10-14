@@ -33,8 +33,6 @@ class Kernel extends HttpKernel
 
         'api' => [
             'throttle:api',
-            \Illuminate\Session\Middleware\StartSession::class, // This is important
-            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
