@@ -32,7 +32,6 @@ class SearchKeywordController extends Controller
             $apiKey = $request->input('api_key');
             $requestId = $request->input('id');
 
-            // Store request_id in cache
             Cache::put('request_id', $requestId);
             $formatData = [];
             foreach (json_decode($keywords) as $keyword) {
@@ -72,11 +71,14 @@ class SearchKeywordController extends Controller
     public function export(Request $request)
     {
         $requestId = Cache::get('request_id', '');
+        Log::info('Request id: '.$requestId);
         $results = Keyword::where('request_id', $requestId)->get()->toArray();
         if ($results && count($results) > 0) {
-            return Excel::download(new KeywordExport($results), 'results.xlsx');
+            $data = Excel::download(new KeywordExport($results), 'results.xlsx');
+            Cache::put('request_id', '');
+            return $data;
         } else {
-            throw new \Exception('Export fail');
+            throw new \Exception('Export lỗi. Vui lòng nhấn F5 để thử lại!');
         }
     }
 }
