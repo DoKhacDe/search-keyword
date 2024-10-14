@@ -53,8 +53,8 @@
     <div id="results-container" class="mt-12 hidden">
         <div class="flex justify-between items-center">
             <h2 class="text-2xl font-semibold text-gray-100">Results</h2>
-            <div class="mt-8 text-center">
-                <a href="{{ route('export') }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            <div class="mt-8 text-center" id="download-container">
+                <a href="{{ route('export') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 hidden" id="download-button">
                     Download Excel
                 </a>
             </div>
@@ -116,6 +116,7 @@
             event.preventDefault();
             $('#loading').removeClass('hidden');
             $('#no-credit').addClass('hidden');
+            $('#download-button').addClass('hidden');
             if (!window.excelData) {
                 $('#error-message').removeClass('hidden').find('span').text('Please select an Excel file first.');
                 return;
@@ -133,7 +134,7 @@
                 formData.append('api_key', apiKey);
                 formData.append('keywords', JSON.stringify(chunk));
                 return $.ajax({
-                    url: '{{ route('search-keyword') }}',
+                    url: '/api/search-keyword',
                     method: 'POST',
                     data: formData,
                     processData: false,
@@ -169,6 +170,9 @@
                 `);
                         });
                         $('#results-container').removeClass('hidden');
+                        setTimeout(function() {
+                            $('#download-button').removeClass('hidden');
+                        }, 10000);
                         $('#loading').addClass('hidden');
                     } else {
                         $('#no-results').removeClass('hidden');

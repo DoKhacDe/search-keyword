@@ -8,11 +8,11 @@ use App\Models\Keyword;
 use App\Services\SearchKeywordService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SearchKeywordController extends Controller
 {
-
     public ?array $dataExport;
 
     public function __construct()
@@ -31,8 +31,8 @@ class SearchKeywordController extends Controller
             $keywords = $request->input('keywords');
             $apiKey = $request->input('api_key');
             $requestId = $request->input('id');
-            $request->session()->put('request_id', $requestId);
-            Log::info('ID: ' . $requestId);
+
+            Cache::put('request_id', $requestId);
             $formatData = [];
             foreach (json_decode($keywords) as $keyword) {
                 $formatData[] = [
@@ -52,13 +52,6 @@ class SearchKeywordController extends Controller
             ];
 
             $responseBody = app(SearchKeywordService::class)->search($query);
-            if (is_array($responseBody)) {
-                $existingResults = $request->session()->get('results-'. $requestId, []);
-                $mergedResults = array_merge($existingResults, $responseBody);
-                $request->session()->put('results-'. $requestId, $mergedResults);
-            } else {
-                throw new \Exception('No valid response from the search service');
-            }
             if (!$responseBody) {
                 throw new \Exception('No response from the search service');
             }
@@ -77,12 +70,15 @@ class SearchKeywordController extends Controller
 
     public function export(Request $request)
     {
-        $requestId = $request->session()->get('request_id', '');
+        $requestId = Cache::get('request_id', '');
+        Log::info('Request id: '.$requestId);
         $results = Keyword::where('request_id', $requestId)->get()->toArray();
         if ($results && count($results) > 0) {
-            return Excel::download(new KeywordExport($results), 'results.xlsx');
+            $data = Excel::download(new KeywordExport($results), 'results.xlsx');
+            Cache::put('request_id', '');
+            return $data;
         } else {
-            throw new \Exception('Export fail');
+            throw new \Exception('Export lỗi. Vui lòng nhấn F5 để thử lại!');
         }
     }
 }
